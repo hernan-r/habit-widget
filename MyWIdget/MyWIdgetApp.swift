@@ -1,17 +1,27 @@
-//
-//  MyWIdgetApp.swift
-//  MyWIdget
-//
-//  Created by herndev on 19/10/2026.
-//
-
 import SwiftUI
 
 @main
 struct MyWIdgetApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabView {
+                ContentView()
+                    .tabItem { Label("Hábitos", systemImage: "checkmark.circle") }
+                StatsTabView()
+                    .tabItem { Label("Stats", systemImage: "chart.bar") }
+            }
+            .preferredColorScheme(.dark)
         }
+    }
+}
+
+struct StatsTabView: View {
+    @State private var habits: [Habit] = HabitStore.load()
+    var body: some View {
+        NavigationStack {
+            StatsView(habits: habits)
+                .navigationTitle("Estadísticas")
+        }
+        .onAppear { habits = HabitStore.load() }
     }
 }

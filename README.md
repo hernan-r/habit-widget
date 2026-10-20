@@ -14,6 +14,7 @@ App de seguimiento de hábitos para iPhone y iPad, escrita en SwiftUI + SwiftDat
 
 ## Índice
 
+- [Capturas](#capturas)
 - [Características](#características)
 - [Widgets](#widgets)
 - [Stack técnico](#stack-técnico)
@@ -27,6 +28,21 @@ App de seguimiento de hábitos para iPhone y iPad, escrita en SwiftUI + SwiftDat
 - [Limitaciones conocidas](#limitaciones-conocidas)
 - [Roadmap](#roadmap)
 - [Licencia](#licencia)
+
+---
+
+## Capturas
+
+<p align="center">
+  <img src="docs/screenshots/01-onboarding.png" width="240" alt="Onboarding de bienvenida">
+  <img src="docs/screenshots/02-habitos.png" width="240" alt="Lista de hábitos con progreso del día y heatmap">
+  <img src="docs/screenshots/03-estadisticas.png" width="240" alt="Estadísticas con gráfico de 7 días y rachas">
+  <img src="docs/screenshots/04-ajustes.png" width="240" alt="Ajustes: tema, notificaciones y export/import">
+</p>
+
+<p align="center">
+  <sub>Onboarding · Hábitos · Estadísticas · Ajustes — iPhone 17, iOS 27, tema Gruvbox Dark</sub>
+</p>
 
 ---
 
@@ -150,6 +166,7 @@ HabitWidget/
 │   └── Gruvbox.swift            # Paleta de colores
 ├── HabitWidgetTests/
 │   └── HabitStoreTests.swift    # Tests de la lógica de completado
+├── docs/screenshots/            # Capturas usadas en este README
 ├── HabitWidgetWidget-Info.plist
 └── HabitWidget.xcodeproj
 ```
@@ -218,7 +235,8 @@ Cobertura actual (`HabitWidgetTests/HabitStoreTests.swift`): ratio de completado
 - [ ] Cálculo real de rachas para `timesPerWeek`.
 - [ ] Localización (es/en) con String Catalogs.
 - [ ] Tests de `resetIfNeeded`, `completionRatio` con frecuencias y export/import JSON.
-- [ ] Capturas de pantalla y GIF del widget en este README.
+- [x] Capturas de la app en este README (`docs/screenshots/`).
+- [ ] Capturas o GIF del widget funcionando (requiere agregarlo al Home Screen del simulador).
 - [ ] Destrackear `xcuserdata` del repositorio (ya cubierto por `.gitignore`).
 
 ## Licencia

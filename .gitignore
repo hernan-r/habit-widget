@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode — estado de usuario (nunca se comparte)
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.xcworkspace/xcuserdata/
+
+# Xcode — builds y artefactos
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.hmap
+*.moved-aside
+*.xccovreport
+*.xccovarchive
+*.coverage
+
+# Dependencias
+.build/
+.swiftpm/
+Pods/
+Carthage/Build/
+
+# Fastlane / CI
+fastlane/report.xml
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Secretos y configuración local
+.env
+.env.*
+*.local.xcconfig

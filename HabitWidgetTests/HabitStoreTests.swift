@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyWIdget
+@testable import HabitWidget
 
 final class HabitStoreTests: XCTestCase {
     func testCompletionRatioEmpty() {

@@ -3,8 +3,8 @@ import SwiftUI
 import AppIntents
 
 @main
-struct MyWIdgetWidget: Widget {
-    let kind = "MyWIdgetWidget"
+struct HabitWidgetWidget: Widget {
+    let kind = "HabitWidgetWidget"
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: kind, intent: SelectCategoryIntent.self, provider: Provider()) { entry in

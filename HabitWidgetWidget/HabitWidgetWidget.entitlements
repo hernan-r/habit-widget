@@ -4,7 +4,7 @@
 <dict>
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.curso.CoinFlip.MyWIdget</string>
+        <string>group.com.curso.CoinFlip.HabitWidget</string>
     </array>
 </dict>
 </plist>

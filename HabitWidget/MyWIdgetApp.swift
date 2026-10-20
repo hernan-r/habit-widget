@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct MyWIdgetApp: App {
+struct HabitWidgetApp: App {
     @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
     @AppStorage("selectedTheme") private var selectedTheme: String = AppTheme.gruvboxDark.rawValue
     @State private var showOnboarding = false

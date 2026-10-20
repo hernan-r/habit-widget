@@ -8,6 +8,7 @@ App de seguimiento de hábitos para iPhone y iPad, escrita en SwiftUI + SwiftDat
 ![Swift](https://img.shields.io/badge/Swift-5.0-F05138?logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-1E90FF)
 ![SwiftData](https://img.shields.io/badge/Storage-SwiftData-8A2BE2)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -218,7 +219,10 @@ Cobertura actual (`HabitWidgetTests/HabitStoreTests.swift`): ratio de completado
 - [ ] Localización (es/en) con String Catalogs.
 - [ ] Tests de `resetIfNeeded`, `completionRatio` con frecuencias y export/import JSON.
 - [ ] Capturas de pantalla y GIF del widget en este README.
+- [ ] Destrackear `xcuserdata` del repositorio (ya cubierto por `.gitignore`).
 
 ## Licencia
 
-Este repositorio todavía no tiene un archivo `LICENSE`. Si querés que otros puedan reutilizar el código, agregá uno (por ejemplo [MIT](https://choosealicense.com/licenses/mit/)) y actualizá esta sección.
+Distribuido bajo licencia **MIT** — ver [`LICENSE`](LICENSE).
+
+Podés usar, modificar y redistribuir el código, incluso comercialmente, manteniendo el aviso de copyright. El software se entrega "tal cual", sin garantías.

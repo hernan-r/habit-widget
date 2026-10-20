@@ -7,6 +7,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \Habit.createdAt) private var habits: [Habit]
 
     @State private var newHabitName: String = ""
@@ -34,16 +35,71 @@ struct ContentView: View {
         NavigationStack {
             ZStack {
                 Gruvbox.background(colorScheme).ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: 16) {
+                List {
+                    Section {
                         filterBar
                         progressCard
-                        habitsList
-                        CalendarHeatmapView(habits: habits)
-                        if filtered.isEmpty { emptyState }
                     }
-                    .padding()
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+
+                    Section {
+                        if filtered.isEmpty {
+                            emptyState
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        } else {
+                            ForEach(filtered, id: \.id) { habit in
+                                HabitRow(habit: habit, colorScheme: colorScheme) {
+                                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit) }
+                                    try? context.save()
+                                    WidgetCenter.shared.reloadAllTimelines()
+                                } onEdit: { editingHabit = habit } onDelete: {
+                                    context.delete(habit)
+                                    try? context.save()
+                                    UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                                    WidgetCenter.shared.reloadAllTimelines()
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        context.delete(habit)
+                                        try? context.save()
+                                        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                                        WidgetCenter.shared.reloadAllTimelines()
+                                    } label: { Label("Eliminar", systemImage: "trash") }
+                                    Button {
+                                        editingHabit = habit
+                                    } label: { Label("Editar", systemImage: "pencil") }
+                                    .tint(Gruvbox.blue)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
+                            }
+                            .onDelete { indexSet in
+                                for i in indexSet {
+                                    let h = filtered[i]
+                                    context.delete(h)
+                                }
+                                try? context.save()
+                                WidgetCenter.shared.reloadAllTimelines()
+                            }
+                        }
+                    }
+                    .listRowSeparator(.hidden)
+
+                    Section {
+                        CalendarHeatmapView(habits: habits)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.8), value: habits.count)
             }
             .navigationTitle("Hábitos")
             .toolbar {
@@ -165,11 +221,22 @@ struct ContentView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "sparkles").font(.largeTitle).foregroundStyle(Gruvbox.gray)
-            Text("Sin hábitos todavía").foregroundStyle(Gruvbox.gray)
-            Text("Tocá + para agregar uno").font(.caption).foregroundStyle(Gruvbox.gray)
-        }.padding(.top, 40)
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 56))
+                .foregroundStyle(Gruvbox.accent)
+
+            Text("Sin hábitos todavía")
+                .font(.title3.bold())
+                .foregroundStyle(Gruvbox.foreground(colorScheme))
+            Text("Tocá + para agregar tu primer hábito y empezar a construir tu racha.")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Gruvbox.gray)
+                .padding(.horizontal)
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
     }
 
     private var addSheet: some View {
@@ -265,6 +332,7 @@ struct ContentView: View {
     private func resetAll() {
         for h in habits { h.isDone = false }
         try? context.save()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         WidgetCenter.shared.reloadAllTimelines()
     }
 }
@@ -302,7 +370,7 @@ struct HabitRow: View {
         }
         .padding()
         .background(Gruvbox.surface(colorScheme))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(habit.name), \(habit.category.rawValue)")
         .accessibilityValue(habit.isDone ? "Completado" : "Pendiente")

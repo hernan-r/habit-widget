@@ -1,10 +1,14 @@
 import SwiftUI
 import WidgetKit
+import UIKit
+import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
-    @State private var habits: [Habit] = HabitStore.load()
+    @Query(sort: \Habit.createdAt) private var habits: [Habit]
+
     @State private var newHabitName: String = ""
     @State private var selectedIcon: String = "checkmark.circle"
     @State private var selectedCategory: HabitCategory = .personal
@@ -14,6 +18,8 @@ struct ContentView: View {
     @State private var showAddSheet: Bool = false
     @State private var editingHabit: Habit? = nil
     @State private var filterCategory: HabitCategory? = nil
+    @State private var showDeleteAllAlert = false
+    @State private var shouldDeleteAll = false
 
     private var filtered: [Habit] {
         guard let f = filterCategory else { return habits }
@@ -47,28 +53,52 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { resetAll() } label: {
-                        Image(systemName: "arrow.counterclockwise").foregroundStyle(Gruvbox.gray)
+                    Menu {
+                        Button { resetAll() } label: { Label("Reiniciar", systemImage: "arrow.counterclockwise") }
+                        Button(role: .destructive) { showDeleteAllAlert = true } label: { Label("Eliminar todos", systemImage: "trash") }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").foregroundStyle(Gruvbox.gray)
                     }
                     .disabled(habits.isEmpty)
                 }
             }
+            .alert("Eliminar todos", isPresented: $showDeleteAllAlert) {
+                Button("Cancelar", role: .cancel) {}
+                Button("Eliminar", role: .destructive) { shouldDeleteAll = true }
+            } message: {
+                Text("Se eliminarán todos los hábitos. Esta acción no se puede deshacer.")
+            }
             .sheet(isPresented: $showAddSheet) { addSheet }
             .sheet(item: $editingHabit) { h in
-                if let idx = habits.firstIndex(where: { $0.id == h.id }) {
-                    HabitEditSheet(habit: $habits[idx]) {
-                        HabitStore.save(habits)
-                        WidgetCenter.shared.reloadAllTimelines()
-                    }
+                HabitEditSheet(habit: h) {
+                    try? context.save()
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
             }
         }
-        .onAppear { habits = HabitStore.load() }
+        .task { seedIfNeeded() }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                habits = HabitStore.load()
+            if phase == .active { HabitStore.resetIfNeeded(context: context) }
+        }
+        .onChange(of: shouldDeleteAll) { _, newValue in
+            guard newValue else { return }
+            Task { @MainActor in
+                HabitStore.deleteAll(context: context)
+                try? context.save()
+                WidgetCenter.shared.reloadAllTimelines()
+                shouldDeleteAll = false
             }
         }
+    }
+
+    private func seedIfNeeded() {
+        let descriptor = FetchDescriptor<Habit>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        if count == 0 {
+            for h in HabitStore.sampleHabits { context.insert(h) }
+            try? context.save()
+        }
+        HabitStore.resetIfNeeded(context: context)
     }
 
     private var filterBar: some View {
@@ -120,17 +150,15 @@ struct ContentView: View {
 
     private var habitsList: some View {
         VStack(spacing: 8) {
-            ForEach($habits) { $habit in
-                if filterCategory == nil || habit.category == filterCategory {
-                    HabitRow(habit: $habit, colorScheme: colorScheme) {
-                        if habit.isDone { HabitStore.markCompleted(&habit) } else { HabitStore.unmarkCompleted(&habit) }
-                        HabitStore.save(habits)
-                        WidgetCenter.shared.reloadAllTimelines()
-                    } onEdit: { editingHabit = habit } onDelete: {
-                        habits.removeAll { $0.id == habit.id }
-                        HabitStore.save(habits)
-                        WidgetCenter.shared.reloadAllTimelines()
-                    }
+            ForEach(filtered, id: \.id) { habit in
+                HabitRow(habit: habit, colorScheme: colorScheme) {
+                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit) }
+                    try? context.save()
+                    WidgetCenter.shared.reloadAllTimelines()
+                } onEdit: { editingHabit = habit } onDelete: {
+                    context.delete(habit)
+                    try? context.save()
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
             }
         }
@@ -220,10 +248,9 @@ struct ContentView: View {
                             default: return .daily
                             }
                         }()
-                        var h = Habit(name: trimmed, icon: selectedIcon, category: selectedCategory, frequency: freq)
-                        if h.isDone { HabitStore.markCompleted(&h) }
-                        habits.append(h)
-                        HabitStore.save(habits)
+                        let h = Habit(name: trimmed, icon: selectedIcon, category: selectedCategory, frequency: freq)
+                        context.insert(h)
+                        try? context.save()
                         WidgetCenter.shared.reloadAllTimelines()
                         newHabitName = ""; selectedIcon = "checkmark.circle"; selectedCategory = .personal; freqMode = 0; selectedWeekdays = []; timesPerWeek = 3
                         showAddSheet = false
@@ -236,14 +263,14 @@ struct ContentView: View {
     }
 
     private func resetAll() {
-        for i in habits.indices { habits[i].isDone = false }
-        HabitStore.save(habits)
+        for h in habits { h.isDone = false }
+        try? context.save()
         WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
 struct HabitRow: View {
-    @Binding var habit: Habit
+    let habit: Habit
     let colorScheme: ColorScheme
     let onChange: () -> Void
     let onEdit: () -> Void
@@ -263,9 +290,11 @@ struct HabitRow: View {
             }
             Spacer()
             Text("🔥\(habit.currentStreak)").font(.caption).foregroundStyle(Gruvbox.accent)
-            Toggle("", isOn: $habit.isDone)
+            Toggle("", isOn: Binding(get: { habit.isDone }, set: { newVal in
+                habit.isDone = newVal
+                onChange()
+            }))
                 .labelsHidden().tint(Gruvbox.accent)
-                .onChange(of: habit.isDone) { _, _ in onChange() }
             Button(role: .destructive) { onDelete() } label: {
                 Image(systemName: "trash").foregroundStyle(.red)
             }
@@ -274,6 +303,9 @@ struct HabitRow: View {
         .padding()
         .background(Gruvbox.surface(colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(habit.name), \(habit.category.rawValue)")
+        .accessibilityValue(habit.isDone ? "Completado" : "Pendiente")
         .contextMenu {
             Button { onEdit() } label: { Label("Editar", systemImage: "pencil") }
             Button(role: .destructive) { onDelete() } label: { Label("Eliminar", systemImage: "trash") }

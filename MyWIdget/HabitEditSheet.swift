@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HabitEditSheet: View {
     @Environment(\.colorScheme) private var colorScheme
-    @Binding var habit: Habit
+    let habit: Habit
     @Environment(\.dismiss) private var dismiss
     let onSave: () -> Void
 
@@ -12,6 +12,8 @@ struct HabitEditSheet: View {
     @State private var freqMode: Int = 0
     @State private var selectedWeekdays: Set<Int> = []
     @State private var timesPerWeek: Int = 3
+    @State private var reminderEnabled: Bool = false
+    @State private var reminderTime: Date = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: .now) ?? .now
 
     let icons = ["checkmark.circle", "drop.fill", "book.fill", "figure.walk", "heart.fill", "star.fill", "moon.fill", "sun.max.fill", "flame.fill", "bolt.fill"]
     private let weekdaySymbols = Calendar.current.shortWeekdaySymbols
@@ -69,6 +71,12 @@ struct HabitEditSheet: View {
                         Stepper("Veces por semana: \(timesPerWeek)", value: $timesPerWeek, in: 1...7)
                     }
                 }
+                Section("Recordatorio") {
+                    Toggle("Activar", isOn: $reminderEnabled)
+                    if reminderEnabled {
+                        DatePicker("Hora", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Gruvbox.background(colorScheme))
@@ -81,6 +89,8 @@ struct HabitEditSheet: View {
                         habit.icon = selectedIcon
                         habit.category = category
                         habit.frequency = buildFrequency()
+                        habit.reminderTime = reminderEnabled ? reminderTime : nil
+                        if reminderEnabled { NotificationManager.schedule(for: habit) } else { NotificationManager.cancel(for: habit) }
                         onSave()
                         dismiss()
                     }
@@ -95,6 +105,7 @@ struct HabitEditSheet: View {
                 case .weekdays(let d): freqMode = 1; selectedWeekdays = d
                 case .timesPerWeek(let n): freqMode = 2; timesPerWeek = n
                 }
+                if let rt = habit.reminderTime { reminderEnabled = true; reminderTime = rt } else { reminderEnabled = false }
             }
         }
     }

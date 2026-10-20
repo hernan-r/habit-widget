@@ -1,27 +1,47 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct MyWIdgetApp: App {
+    @AppStorage("hasOnboarded") private var hasOnboarded: Bool = false
+    @AppStorage("selectedTheme") private var selectedTheme: String = AppTheme.gruvboxDark.rawValue
+    @State private var showOnboarding = false
+
+    var theme: AppTheme { AppTheme(rawValue: selectedTheme) ?? .gruvboxDark }
+
     var body: some Scene {
         WindowGroup {
-            TabView {
-                ContentView()
-                    .tabItem { Label("Hábitos", systemImage: "checkmark.circle") }
-                StatsTabView()
-                    .tabItem { Label("Stats", systemImage: "chart.bar") }
+            Group {
+                if !hasOnboarded {
+                    OnboardingView(isPresented: $showOnboarding)
+                        .onAppear { showOnboarding = true }
+                } else {
+                    TabView {
+                        ContentView()
+                            .tabItem { Label("Hábitos", systemImage: "checkmark.circle") }
+                        StatsTabView()
+                            .tabItem { Label("Stats", systemImage: "chart.bar") }
+                        SettingsView()
+                            .tabItem { Label("Ajustes", systemImage: "gear") }
+                    }
+                }
             }
-            .preferredColorScheme(.dark)
+            .modelContainer(HabitContainer.container)
+            .preferredColorScheme(theme.colorScheme)
+            .onAppear {
+                NotificationManager.requestAuthorization()
+                if !hasOnboarded { showOnboarding = true }
+            }
         }
     }
 }
 
 struct StatsTabView: View {
-    @State private var habits: [Habit] = HabitStore.load()
+    @Query(sort: \Habit.createdAt) private var habits: [Habit]
     var body: some View {
         NavigationStack {
             StatsView(habits: habits)
                 .navigationTitle("Estadísticas")
         }
-        .onAppear { habits = HabitStore.load() }
     }
 }

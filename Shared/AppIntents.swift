@@ -55,11 +55,11 @@ struct ToggleHabitIntent: AppIntent {
         if let idx = habits.firstIndex(where: { $0.id.uuidString == habitID }) {
             habits[idx].isDone.toggle()
             if habits[idx].isDone {
-                HabitStore.markCompleted(&habits[idx])
+                HabitStore.markCompleted(habits[idx])
             } else {
-                HabitStore.unmarkCompleted(&habits[idx])
+                HabitStore.unmarkCompleted(habits[idx])
             }
-            HabitStore.save(habits)
+            HabitStore.save()
         }
         WidgetCenter.shared.reloadAllTimelines()
         return .result()

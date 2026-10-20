@@ -2,7 +2,7 @@ import SwiftData
 import Foundation
 
 enum HabitContainer {
-    static let appGroupID = "group.com.curso.CoinFlip.HabitWidget"
+    static let appGroupID = "group.com.hernanr.habitwidget"
 
     static var storeURL: URL {
         let base = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)

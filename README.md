@@ -4,7 +4,7 @@ App de seguimiento de hábitos para iPhone y iPad, escrita en SwiftUI + SwiftDat
 
 > Proyecto de aprendizaje de Swift/SwiftUI: código legible, estructura simple y foco en widgets, persistencia local y notificaciones.
 
-![iOS](https://img.shields.io/badge/iOS-27.0-000000?logo=apple&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-17.0+-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-5.0-F05138?logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-1E90FF)
 ![SwiftData](https://img.shields.io/badge/Storage-SwiftData-8A2BE2)
@@ -96,18 +96,18 @@ Sin dependencias externas ni gestores de paquetes: solo frameworks de Apple.
 ## Requisitos
 
 - **macOS** con **Xcode** (el proyecto está configurado con `SWIFT_VERSION = 5.0`).
-- **iOS/iPadOS 27.0** según `IPHONEOS_DEPLOYMENT_TARGET` del proyecto, sobre iPhone o iPad (`TARGETED_DEVICE_FAMILY = "1,2"`).
+- **iOS/iPadOS 17.0** o superior (`IPHONEOS_DEPLOYMENT_TARGET = 17.0`), en iPhone o iPad (`TARGETED_DEVICE_FAMILY = "1,2"`).
 - Una cuenta de desarrollador para ejecutar en dispositivo físico (los widgets y las notificaciones no funcionan bien solo en Playgrounds).
 
-> **Nota**: el código usa APIs que requieren **iOS 17+** (SwiftData, `containerBackground`, widgets interactivos). Si necesitás correrlo en una versión anterior, bajá el deployment target de los tres targets a iOS 17.
+> **Nota**: iOS 17 es el mínimo real del código — SwiftData, `containerBackground` y los widgets interactivos con App Intents no existen antes.
 
 ## Cómo compilar y correr
 
 1. Cloná el repositorio:
 
    ```bash
-   git clone <URL-del-repositorio>
-   cd HabitWidget
+   git clone https://github.com/hernan-r/habit-widget.git
+   cd habit-widget
    ```
 
 2. Abrí el proyecto:
@@ -116,10 +116,9 @@ Sin dependencias externas ni gestores de paquetes: solo frameworks de Apple.
    open HabitWidget.xcodeproj
    ```
 
-3. En **Xcode → Signing & Capabilities**, seleccioná tu **Team** en los tres targets:
+3. En **Xcode → Signing & Capabilities**, seleccioná tu **Team** en los dos targets:
    - `HabitWidget` (app)
    - `HabitWidgetWidget` (extensión de widget)
-   - `HabitWidgetTests`
 
 4. Verificá que el **App Group** coincida con tu Team (ver [Configuración de firma](#configuración-de-firma-y-app-group)).
 
@@ -197,16 +196,19 @@ App y widget comparten datos vía App Group. Los valores actuales del proyecto s
 
 | Elemento | Valor |
 | --- | --- |
-| Bundle ID app | `com.curso.CoinFlip.HabitWidget` |
-| Bundle ID widget | `com.curso.CoinFlip.HabitWidget.HabitWidgetWidget` |
-| App Group | `group.com.curso.CoinFlip.HabitWidget` |
+| Bundle ID app | `com.hernanr.habitwidget` |
+| Bundle ID widget | `com.hernanr.habitwidget.habitwidgetwidget` |
+| App Group | `group.com.hernanr.habitwidget` |
+| Nombre visible | `Hábitos` (`CFBundleDisplayName`) |
 
 Si cambiás el bundle ID o el Team, actualizá en conjunto:
 
 1. `HabitContainer.appGroupID` en `Shared/HabitContainer.swift`.
 2. Los entitlements `HabitWidget/HabitWidget.entitlements` y `HabitWidgetWidget/HabitWidgetWidget.entitlements`.
 
-Si el App Group no coincide, el widget no encuentra datos y el store cae a Application Support local.
+Si el App Group no coincide, el widget no encuentra datos y el store cae a Application Support local. **Cambiar de App Group implica perder los datos guardados en el grupo anterior**: la app arranca vacía y vuelve a sembrar los hábitos de ejemplo.
+
+Los entitlements solo declaran el App Group. No hay capacidades de iCloud, HealthKit ni ninguna otra que obligue a habilitar servicios extra en tu Team.
 
 ## Tests
 
@@ -223,7 +225,7 @@ Cobertura actual (`HabitWidgetTests/HabitStoreTests.swift`): ratio de completado
 
 ## Limitaciones conocidas
 
-- La sección **iCloud → Sincronizar ahora** de Ajustes es un placeholder: el store se configura con `cloudKitDatabase: .none`, así que la sincronización entre dispositivos no está implementada.
+- La sección **iCloud → Sincronizar ahora** de Ajustes es un placeholder: el store se configura con `cloudKitDatabase: .none` y el entitlement de iCloud se quitó del proyecto, así que la sincronización entre dispositivos no está implementada.
 - `HabitStore.exportCSV(_:)` existe pero todavía no está expuesto en la UI.
 - `HabitFrequency.timesPerWeek` es informativo en esta versión: el cálculo de rachas y el ratio usan días completados.
 - Los textos de UI están en español y no hay archivos de localización (`Localizable.strings`) todavía.

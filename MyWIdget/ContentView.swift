@@ -53,7 +53,7 @@ struct ContentView: View {
                         } else {
                             ForEach(filtered, id: \.id) { habit in
                                 HabitRow(habit: habit, colorScheme: colorScheme) {
-                                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit) }
+                                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit); UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                                     try? context.save()
                                     WidgetCenter.shared.reloadAllTimelines()
                                 } onEdit: { editingHabit = habit } onDelete: {
@@ -107,6 +107,7 @@ struct ContentView: View {
                     Button { showAddSheet = true } label: {
                         Image(systemName: "plus.circle.fill").foregroundStyle(Gruvbox.accent)
                     }
+                    .accessibilityLabel("Agregar hábito")
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
@@ -115,6 +116,7 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle").foregroundStyle(Gruvbox.gray)
                     }
+                    .accessibilityLabel("Más opciones")
                     .disabled(habits.isEmpty)
                 }
             }
@@ -179,6 +181,8 @@ struct ContentView: View {
                 .foregroundStyle(filterCategory == cat ? Color.black : Gruvbox.foreground(colorScheme))
                 .clipShape(Capsule())
         }
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(filterCategory == cat ? .isSelected : [])
     }
 
     private var progressCard: some View {
@@ -208,7 +212,7 @@ struct ContentView: View {
         VStack(spacing: 8) {
             ForEach(filtered, id: \.id) { habit in
                 HabitRow(habit: habit, colorScheme: colorScheme) {
-                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit) }
+                    if habit.isDone { HabitStore.markCompleted(habit); UIImpactFeedbackGenerator(style: .medium).impactOccurred() } else { HabitStore.unmarkCompleted(habit); UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                     try? context.save()
                     WidgetCenter.shared.reloadAllTimelines()
                 } onEdit: { editingHabit = habit } onDelete: {
@@ -223,7 +227,7 @@ struct ContentView: View {
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
-                .font(.system(size: 56))
+                .font(.largeTitle)
                 .foregroundStyle(Gruvbox.accent)
 
             Text("Sin hábitos todavía")
@@ -372,8 +376,10 @@ struct HabitRow: View {
         .background(Gruvbox.surface(colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(habit.name), \(habit.category.rawValue)")
+        .accessibilityLabel("\(habit.name), \(habit.category.rawValue), \(habit.frequency.displayName)")
         .accessibilityValue(habit.isDone ? "Completado" : "Pendiente")
+        .accessibilityHint(habit.isDone ? "Doble toque para marcar como pendiente" : "Doble toque para marcar como completado")
+        .accessibilityAction(named: habit.isDone ? "Desmarcar" : "Completar") { onChange() }
         .contextMenu {
             Button { onEdit() } label: { Label("Editar", systemImage: "pencil") }
             Button(role: .destructive) { onDelete() } label: { Label("Eliminar", systemImage: "trash") }

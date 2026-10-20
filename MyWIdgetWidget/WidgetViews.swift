@@ -43,7 +43,7 @@ struct HabitWidgetView: View {
                     .stroke(Gruvbox.accent, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 Text("\(completed)")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.title2.bold().monospacedDigit())
                     .foregroundStyle(Gruvbox.foreground(colorScheme))
             }
             .frame(width: 60, height: 60)
